@@ -10,7 +10,7 @@ initial_lr = 0.01
 num_epoch = 300
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #==============데이터 적재 파트=====================================================
-#데이터 어그멘테이션은 스킵합니다. MNIST는 그 자체로 충분할 터.
+
 transform_train = transforms.Compose([
         #transforms.Resize(32),
         transforms.RandomCrop(28, padding=4),
