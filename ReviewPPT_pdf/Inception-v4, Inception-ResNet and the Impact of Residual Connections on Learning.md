@@ -47,24 +47,16 @@
 ## 3. Architectural Choices
 
 * **Pure Inception Blocks** (for Inception-v4)
-
   * 요약
-
     * residual connection을 활용하지 않는 deep convolutional network
-
   * 특징
-
     * 분산처리를 위해 짊어지고 있던 필요없는 구조 버림
     * 각 그리드 크기에 대해 Inception block을 균일하게 선택함
-
     * 그림에서 V가 없으면 same-padding, V가 있으면 valid-padding(no padding)
-
   * 구조
-
     * ![image](https://user-images.githubusercontent.com/35680202/129485748-849724d1-09f6-4b1f-9198-4d8ea57129e3.png)
 
 * **Residual Inception Blocks** (for Inception-ResNet-v1,v2)
-
   * 요약
     * filter concatenation 대신 residual connection을 활용하는 Inception 스타일의 네트워크
   * 특징
@@ -79,7 +71,6 @@
     * ![image](https://user-images.githubusercontent.com/35680202/129485825-dfcbe49a-d108-4acb-9ae4-195bb9bcbb28.png)
 
 * **Scaling of the Residuals**
-
   * 문제
     * filter 개수가 1000개가 넘어가면 불안정해지기 시작
     * learning rate를 낮추거나 batchnorm을 추가로 넣는 것만으로는 해결 불가능
