@@ -1,6 +1,12 @@
 # Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning
 
-[TOC]
+- [Inception-v4, Inception-ResNet and the Impact of Residual Connections on Learning](#inception-v4-inception-resnet-and-the-impact-of-residual-connections-on-learning)
+  - [0. Abstract](#0-abstract)
+  - [1. Introduction](#1-introduction)
+  - [2. Related Work](#2-related-work)
+  - [3. Architectural Choices](#3-architectural-choices)
+  - [4. Training Methology](#4-training-methology)
+  - [5. Experimental Results](#5-experimental-results)
 
 ## 0. Abstract
 
@@ -47,16 +53,24 @@
 ## 3. Architectural Choices
 
 * **Pure Inception Blocks** (for Inception-v4)
+
   * 요약
+
     * residual connection을 활용하지 않는 deep convolutional network
+
   * 특징
+
     * 분산처리를 위해 짊어지고 있던 필요없는 구조 버림
     * 각 그리드 크기에 대해 Inception block을 균일하게 선택함
+
     * 그림에서 V가 없으면 same-padding, V가 있으면 valid-padding(no padding)
+
   * 구조
-    * ![image](https://user-images.githubusercontent.com/35680202/129485748-849724d1-09f6-4b1f-9198-4d8ea57129e3.png)
+
+    * ![inception-v4](https://user-images.githubusercontent.com/35680202/129518621-c9d0cab4-4d53-4eb6-a0d4-27904230ffe5.PNG)
 
 * **Residual Inception Blocks** (for Inception-ResNet-v1,v2)
+
   * 요약
     * filter concatenation 대신 residual connection을 활용하는 Inception 스타일의 네트워크
   * 특징
@@ -67,8 +81,8 @@
     * Inception-ResNet-v1 : Inception-v3의 계산비용과 일치
     * Inception-ResNet-v2 : Inception-v4의 계산비용과 일치 (step time은 Inception-v4가 레이어 수가 더 많아서 더 느렸다.)
   * 구조
-    * ![image](https://user-images.githubusercontent.com/35680202/129485797-ed3d48ed-2ade-41d1-9993-d851eed130a9.png)
-    * ![image](https://user-images.githubusercontent.com/35680202/129485825-dfcbe49a-d108-4acb-9ae4-195bb9bcbb28.png)
+    * ![inception-resnet-v1](https://user-images.githubusercontent.com/35680202/129518710-9dc5fb93-3134-4dde-a753-e2b2d6e21fb2.PNG)
+    * ![inception-resnet-v2](https://user-images.githubusercontent.com/35680202/129518757-06cd1950-d03b-408e-9903-13b109a96a13.PNG)
 
 * **Scaling of the Residuals**
   * 문제
