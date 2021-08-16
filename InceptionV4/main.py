@@ -7,11 +7,11 @@ from ImportShortcut import *
 print(torch.__version__)
 
 
-batch_size = 1
+batch_size = 4
 validation_ratio = 0.1
 random_seed = 7993
 initial_lr = 0.01
-
+num_epoch = 10
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
@@ -304,148 +304,57 @@ summary(model, (3, 299, 299), device=device.type)
 
 
 loss_func = nn.CrossEntropyLoss(reduction='sum')
-opt = optim.Adam(model.parameters(), lr=0.001)
+opt = optim.Adam(model.parameters(), lr=0.01)
 
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-lr_scheduler = ReduceLROnPlateau(opt, mode='min', factor=0.1, patience=10)
+lr_scheduler = optim.lr_scheduler.MultiStepLR(optimizer=opt, milestones=[int(num_epoch * 0.5), int(num_epoch * 0.75)], gamma=0.1, last_epoch=-1)
 
 
-# function to get current learning rate
-def get_lr(opt):
-    for param_group in opt.param_groups:
-        return param_group['lr']
-
-# function to calculate metric per mini-batch
-def metric_batch(output, target):
-    pred = output.argmax(1, keepdim=True)
-    corrects = pred.eq(target.view_as(pred)).sum().item()
-    return corrects
-
-# function to calculate loss per mini-batch
-def loss_batch(loss_func, output, target, opt=None):
-    loss_b = loss_func(output, target)
-    metric_b = metric_batch(output, target)
-
-    if opt is not None:
-        opt.zero_grad()
-        loss_b.backward()
-        opt.step()
-
-    return loss_b.item(), metric_b
-
-# function to calculate loss per epoch
-def loss_epoch(model, loss_func, dataset_dl, sanity_check=False, opt=None):
+for epoch in range(num_epoch):  
+    lr_scheduler.step()
+    
     running_loss = 0.0
-    running_metric = 0.0
-    len_data = len(dataset_dl.dataset)
+    for i, data in enumerate(train_dl, 0):
+        inputs, labels = data
+        inputs, labels = inputs.to(device), labels.to(device)
 
-    for xb, yb in dataset_dl:
-        xb = xb.to(device)
-        yb = yb.to(device)
-        output = model(xb)
+        opt.zero_grad()
 
-        loss_b, metric_b = loss_batch(loss_func, output, yb, opt)
+        outputs = model(inputs)
+        loss = loss_func(outputs, labels)
+        loss.backward()
+        opt.step()
+        
+        running_loss += loss.item()
+        
+        show_period = 100
+        if i % show_period == show_period-1:    # print every "show_period" mini-batches
+            print('[%d, %5d/50000] loss: %.7f' %
+                  (epoch + 1, (i + 1)*batch_size, running_loss / show_period))
+            if (running_loss/show_period)<=0.017:
+              break
+            running_loss = 0.0
+        torch.cuda.empty_cache()
+            
+        
+        
+    # validation part
+    correct = 0
+    total = 0
+    for i, data in enumerate(val_dl, 0):
+        inputs, labels = data
+        inputs, labels = inputs.to(device), labels.to(device)
+        outputs = model(inputs)
+        
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+        
+    print('[%d epoch] Accuracy of the network on the validation images: %d %%' % 
+          (epoch + 1, 100 * correct / total)
+         )
+    if (correct/total)<=0.99:
+      print("early stopping....")
+      break
 
-        running_loss += loss_b
-
-        if metric_b is not None:
-            running_metric += metric_b
-
-        if sanity_check is True:
-            break
-
-    loss = running_loss / len_data
-    metric = running_metric / len_data
-
-    return loss, metric
-import time
-# function to start training
-def train_val(model, params):
-    num_epochs=params['num_epochs']
-    loss_func=params["loss_func"]
-    opt=params["optimizer"]
-    train_dl=params["train_dl"]
-    val_dl=params["val_dl"]
-    sanity_check=params["sanity_check"]
-    lr_scheduler=params["lr_scheduler"]
-    path2weights=params["path2weights"]
-
-    loss_history = {'train': [], 'val': []}
-    metric_history = {'train': [], 'val': []}
-
-    best_loss = float('inf')
-
-    start_time = time.time()
-
-    for epoch in range(num_epochs):
-        current_lr = get_lr(opt)
-        print('Epoch {}/{}, current lr={}'.format(epoch, num_epochs-1, current_lr))
-
-        model.train()
-        train_loss, train_metric = loss_epoch(model, loss_func, train_dl, sanity_check, opt)
-        loss_history['train'].append(train_loss)
-        metric_history['train'].append(train_metric)
-
-        model.eval()
-        with torch.no_grad():
-            val_loss, val_metric = loss_epoch(model, loss_func, val_dl, sanity_check)
-        loss_history['val'].append(val_loss)
-        metric_history['val'].append(val_metric)
-
-        if val_loss < best_loss:
-            best_loss = val_loss
-            print('Get best val_loss!')
-
-        lr_scheduler.step(val_loss)
-
-        print('train loss: %.6f, val loss: %.6f, accuracy: %.2f, time: %.4f min' %(train_loss, val_loss, 100*val_metric, (time.time()-start_time)/60))
-        print('-'*10)
-
-    return model, loss_history, metric_history
-
-
-# definc the training parameters
-params_train = {
-    'num_epochs':5,
-    'optimizer':opt,
-    'loss_func':loss_func,
-    'train_dl':train_dl,
-    'val_dl':val_dl,
-    'sanity_check':False,
-    'lr_scheduler':lr_scheduler,
-    'path2weights':'./models/weights.pt',
-}
-import os
-
-# create the directory that stores weights.pt
-def createFolder(directory):
-    try:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-    except:
-        pass
-createFolder('./models')
-
-
-model, loss_hist, metric_hist = train_val(model, params_train)
-
-
-num_epochs=params_train["num_epochs"]
-
-# plot loss progress
-plt.title("Train-Val Loss")
-plt.plot(range(1,num_epochs+1),loss_hist["train"],label="train")
-plt.plot(range(1,num_epochs+1),loss_hist["val"],label="val")
-plt.ylabel("Loss")
-plt.xlabel("Training Epochs")
-plt.legend()
-plt.show()
-
-# plot accuracy progress
-plt.title("Train-Val Accuracy")
-plt.plot(range(1,num_epochs+1),metric_hist["train"],label="train")
-plt.plot(range(1,num_epochs+1),metric_hist["val"],label="val")
-plt.ylabel("Accuracy")
-plt.xlabel("Training Epochs")
-plt.legend()
-plt.show()
+print('Finished Training')
