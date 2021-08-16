@@ -9,6 +9,7 @@ random_seed = 7993
 initial_lr = 0.01
 num_epoch = 300
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print(device)
 #==============데이터 적재 파트=====================================================
 
 transform_train = transforms.Compose([
