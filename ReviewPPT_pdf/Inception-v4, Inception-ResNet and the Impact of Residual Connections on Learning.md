@@ -69,7 +69,7 @@
   * 특징
     * 좀 더 저렴한 Inception block 사용
     * 각 Inception block 뒤에 **filter-expansion layer(1x1 conv)** : Inception block으로 인한 차원 감소를 보상하기 위함
-    * **activation size가 큰 레이어에서 batchnorm을 제거**함으로써, 전체 Inception block의 수를 늘렸다.
+    * **activation size가 큰 summation(concat) 레이어 위에서의 batchnorm은 제거**함으로써, 메모리를 크게 사용하지 않아, 전체 Inception block의 수를 늘릴 수 있었다.
   * 종류
     * Inception-ResNet-v1 : Inception-v3의 계산비용과 일치
     * Inception-ResNet-v2 : Inception-v4의 계산비용과 일치 (step time은 Inception-v4가 레이어 수가 더 많아서 더 느렸다.)
